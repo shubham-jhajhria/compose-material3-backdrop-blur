@@ -18,6 +18,8 @@ package androidx.compose.material3
 
 import android.content.Context
 import android.graphics.Outline
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Build
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
@@ -323,6 +325,7 @@ private class ModalBottomSheetDialogWrapper(
     ViewRootForInspector {
 
     private val dialogLayout: ModalBottomSheetDialogLayout
+    private var isBackdropBlurApplied = false
 
     // On systems older than Android S, there is a bug in the surface insets matrix math used by
     // elevation, so high values of maxSupportedElevation break accessibility services: b/232788477.
@@ -410,18 +413,7 @@ private class ModalBottomSheetDialogWrapper(
         this.blurBehindRadius = blurBehindRadius
         this.contentColor = contentColor
         setSecurePolicy(properties.securePolicy)
-        if (Build.VERSION.SDK_INT >= 31) {
-            val radius = if (blurBehindRadius.isSpecified) {
-                with(density) { blurBehindRadius.toPx() }.toInt().coerceAtLeast(0)
-            } else {
-                0
-            }
-            window!!.setFlags(
-                if (radius > 0) WindowManager.LayoutParams.FLAG_BLUR_BEHIND else 0,
-                WindowManager.LayoutParams.FLAG_BLUR_BEHIND,
-            )
-            window!!.attributes = window!!.attributes.apply { setBlurBehindRadius(radius) }
-        }
+        updateBackdropBlur()
         setLayoutDirection(layoutDirection)
 
         // Window flags to span parent window.
@@ -447,7 +439,32 @@ private class ModalBottomSheetDialogWrapper(
     }
 
     fun disposeComposition() {
+        clearBackdropBlur()
         dialogLayout.disposeComposition()
+    }
+
+    private fun updateBackdropBlur() {
+        if (Build.VERSION.SDK_INT < 31) return
+        val radius = if (blurBehindRadius.isSpecified) {
+            with(density) { blurBehindRadius.toPx() }.coerceAtLeast(0f)
+        } else {
+            0f
+        }
+        if (radius > 0f) {
+            composeView.setRenderEffect(
+                RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
+            )
+            isBackdropBlurApplied = true
+        } else {
+            clearBackdropBlur()
+        }
+    }
+
+    private fun clearBackdropBlur() {
+        if (Build.VERSION.SDK_INT >= 31 && isBackdropBlurApplied) {
+            composeView.setRenderEffect(null)
+            isBackdropBlurApplied = false
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
