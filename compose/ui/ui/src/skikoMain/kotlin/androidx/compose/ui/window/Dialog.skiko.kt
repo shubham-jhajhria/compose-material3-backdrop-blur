@@ -61,6 +61,7 @@ import androidx.compose.ui.scene.Content
 import androidx.compose.ui.scene.rememberComposeSceneLayer
 import androidx.compose.ui.semantics.dialog
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.center
@@ -97,6 +98,7 @@ private const val AnimatedLayerDisappearanceDuration = 0.1
  * @property useSoftwareKeyboardInset Whether the size of the dialog's content should be limited by
  * software keyboard inset.
  * @property scrimColor Color of background fill.
+ * @property blurBehindRadius Blur radius for content behind the dialog. Zero disables blur.
  * @property animateTransition Whether to animate the appearance and disappearance of the dialog.
  */
 @Immutable
@@ -107,6 +109,7 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
     val usePlatformInsets: Boolean = true,
     val useSoftwareKeyboardInset: Boolean = true,
     val scrimColor: Color = DefaultScrimColor,
+    val blurBehindRadius: Dp = Dp.Unspecified,
     @property:ExperimentalComposeUiApi
     val animateTransition: Boolean = ComposeUiFlags.isDialogAnimationEnabled,
 ) {
@@ -130,6 +133,7 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
         usePlatformInsets: Boolean = true,
         useSoftwareKeyboardInset: Boolean = true,
         scrimColor: Color = DefaultScrimColor,
+        blurBehindRadius: Dp = Dp.Unspecified,
     ) : this(
         dismissOnBackPress = dismissOnBackPress,
         dismissOnClickOutside = dismissOnClickOutside,
@@ -137,6 +141,7 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
         usePlatformInsets = usePlatformInsets,
         useSoftwareKeyboardInset = useSoftwareKeyboardInset,
         scrimColor = scrimColor,
+        blurBehindRadius = blurBehindRadius,
         animateTransition = ComposeUiFlags.isDialogAnimationEnabled,
     )
 
@@ -150,6 +155,7 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
         if (usePlatformInsets != other.usePlatformInsets) return false
         if (useSoftwareKeyboardInset != other.useSoftwareKeyboardInset) return false
         if (scrimColor != other.scrimColor) return false
+        if (blurBehindRadius != other.blurBehindRadius) return false
         if (animateTransition != other.animateTransition) return false
 
         return true
@@ -162,6 +168,7 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
         result = 31 * result + usePlatformInsets.hashCode()
         result = 31 * result + useSoftwareKeyboardInset.hashCode()
         result = 31 * result + scrimColor.hashCode()
+        result = 31 * result + blurBehindRadius.hashCode()
         result = 31 * result + animateTransition.hashCode()
         return result
     }
@@ -286,6 +293,7 @@ private class DialogAppearanceController(
         set(value) {
             field = value
             updateScrimLayerColor(Snapshot.withoutReadObservation { appearanceProgress })
+            layer.backdropBlurRadius = value.blurBehindRadius
         }
 
     val modifier = Modifier.drawWithGraphicsLayer { appearanceProgress }
@@ -303,6 +311,7 @@ private class DialogAppearanceController(
         }
         appearanceProgress = 1f
         layer.scrimColor = properties.scrimColor
+        layer.backdropBlurRadius = properties.blurBehindRadius
     }
 
     fun hideDialog() {
