@@ -424,7 +424,7 @@ private class ModalBottomSheetDialogWrapper(
                 if (radius > 0) WindowManager.LayoutParams.FLAG_BLUR_BEHIND else 0,
                 WindowManager.LayoutParams.FLAG_BLUR_BEHIND,
             )
-            window!!.attributes = window!!.attributes.apply { blurBehindRadius = radius }
+            window!!.attributes = window!!.attributes.apply { setBlurBehindRadius(radius) }
         }
         setLayoutDirection(layoutDirection)
 

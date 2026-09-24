@@ -132,6 +132,18 @@ private fun Project.configureComponentPublishing(
             it.maven { repo ->
                 repo.setUrl(getRepositoryDirectory())
             }
+            val githubActor = System.getenv("GITHUB_ACTOR")
+            val githubToken = System.getenv("GITHUB_TOKEN")
+            if (!githubActor.isNullOrBlank() && !githubToken.isNullOrBlank()) {
+                it.maven { repo ->
+                    repo.name = "GitHubPackages"
+                    repo.setUrl("https://maven.pkg.github.com/shubham-jhajhria/compose-material3-backdrop-blur")
+                    repo.credentials { credentials ->
+                        credentials.username = githubActor
+                        credentials.password = githubToken
+                    }
+                }
+            }
         }
         publications {
             if (appliesJavaGradlePluginPlugin()) {

@@ -33,8 +33,21 @@ On iOS, the dialog layer applies a Skia backdrop filter before drawing the
 scrim and dialog content. This blurs previously drawn Compose content in the
 same Metal canvas. UIKit views rendered separately are not included.
 
-This branch is source code, not a published library release. The JetBrains
-build redirects Material 3's Android target to upstream AndroidX, so the
-Android source change must also be built and published from AndroidX. Apps
-need compatible patched AndroidX and Compose Multiplatform artifacts before
-using this API on both platforms.
+## Maven publication
+
+The fork builds both Android and iOS source, including the patched Android
+Material 3 AAR. GitHub Actions publishes Compose and Material 3 artifacts to
+GitHub Packages at `https://maven.pkg.github.com/shubham-jhajhria/compose-material3-backdrop-blur`.
+The version is `9999.0.0-SNAPSHOT`. Run the `Publish backdrop blur Maven packages`
+workflow manually or push to `feature/backdrop-blur` to publish automatically.
+GitHub Packages requires a token with `read:packages` even for public Maven
+artifacts. The workflow uses its own `GITHUB_TOKEN` for publishing.
+
+For local development, the same artifacts can be built with:
+
+```bash
+./gradlew :mpp:publishComposeJbToMavenLocal \
+  -Pcompose.platforms=ios,android \
+  -Pjetbrains.publication.libraries=COMPOSE,COMPOSE_MATERIAL3 \
+  --no-configuration-cache -Dorg.gradle.configureondemand=false
+```

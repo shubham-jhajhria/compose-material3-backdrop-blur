@@ -33,6 +33,16 @@ tasks.register("publishComposeJbToMavenLocal", ComposePublishingTask::class) {
     }
 }
 
+tasks.register("publishComposeJbToGitHubPackages", ComposePublishingTask::class) {
+    group = "Compose Multiplatform"
+    repository = "GitHubPackagesRepository"
+    composeProperties = parsedComposeProperties
+
+    libraries.forEach {
+        libraryToComponents[it]?.forEach { publish(rootProject, it) }
+    }
+}
+
 val libraries = project.findProperty("jetbrains.publication.libraries")
     ?.toString()?.split(",")
     ?: libraryToComponents.keys
