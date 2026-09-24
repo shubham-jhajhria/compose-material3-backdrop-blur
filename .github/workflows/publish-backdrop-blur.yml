@@ -1,0 +1,45 @@
+name: Publish backdrop blur Maven packages
+
+on:
+  push:
+    branches: [feature/backdrop-blur-v1.12.1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Set iOS deployment target
+        run: printf 'IPHONEOS_DEPLOYMENT_TARGET = 15.0\n' > "$RUNNER_TEMP/compose-blur-build.xcconfig"
+      - name: Publish to public Maven directory
+        env:
+          XCODE_XCCONFIG_FILE: ${{ runner.temp }}/compose-blur-build.xcconfig
+        run: |
+          ./gradlew :mpp:publishComposeJbToMavenLocal \
+            -Pcompose.platforms=ios,android \
+            -Pjetbrains.publication.libraries=COMPOSE,COMPOSE_MATERIAL3 \
+            -Pjetbrains.publication.version.COMPOSE=9999.0.1-SNAPSHOT \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=9999.0.1-SNAPSHOT \
+            -Dmaven.repo.local="$RUNNER_TEMP/compose-maven" \
+            --no-configuration-cache \
+            -Dorg.gradle.configureondemand=false \
+            --parallel --max-workers=6 --console=plain
+          mkdir -p "$RUNNER_TEMP/pages/maven"
+          cp -R "$RUNNER_TEMP/compose-maven/." "$RUNNER_TEMP/pages/maven/"
+          touch "$RUNNER_TEMP/pages/.nojekyll"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages
+      - uses: actions/deploy-pages@v4

@@ -36,13 +36,10 @@ plugins {
 }
 
 androidXMultiplatform {
-    redirect("androidx.compose.material3") {
-        androidLibrary {
-            compileSdk = 35
-            namespace = "org.jetbrains.androidx.compose.material3"
-
-            androidResources.enable = true
-        }
+    androidLibrary {
+        compileSdk = 35
+        namespace = "androidx.compose.material3"
+        androidResources.enable = true
     }
     desktop()
     mac()
@@ -72,6 +69,8 @@ androidXMultiplatform {
             api("androidx.annotation:annotation:1.8.1")
             api("androidx.annotation:annotation-experimental:1.4.1")
             implementation("androidx.activity:activity-compose:1.8.2")
+            implementation("androidx.core:core-ktx:1.15.0")
+            implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
             implementation("androidx.lifecycle:lifecycle-common-java8:2.6.1")
         }
 
