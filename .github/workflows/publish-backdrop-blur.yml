@@ -8,6 +8,8 @@ on:
 permissions:
   contents: read
   packages: write
+  pages: write
+  id-token: write
 
 jobs:
   publish:
@@ -32,3 +34,22 @@ jobs:
             --no-configuration-cache \
             -Dorg.gradle.configureondemand=false \
             --parallel --max-workers=6 --console=plain
+      - name: Publish to public Maven directory
+        env:
+          XCODE_XCCONFIG_FILE: ${{ runner.temp }}/compose-blur-build.xcconfig
+        run: |
+          ./gradlew :mpp:publishComposeJbToMavenLocal \
+            -Pcompose.platforms=ios,android \
+            -Pjetbrains.publication.libraries=COMPOSE,COMPOSE_MATERIAL3 \
+            -Dmaven.repo.local="$RUNNER_TEMP/compose-maven" \
+            --no-configuration-cache \
+            -Dorg.gradle.configureondemand=false \
+            --parallel --max-workers=6 --console=plain
+          mkdir -p "$RUNNER_TEMP/pages/maven"
+          cp -R "$RUNNER_TEMP/compose-maven/." "$RUNNER_TEMP/pages/maven/"
+          touch "$RUNNER_TEMP/pages/.nojekyll"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages
+      - uses: actions/deploy-pages@v4
