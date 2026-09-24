@@ -36,11 +36,13 @@ plugins {
 }
 
 androidXMultiplatform {
-    androidLibrary {
-        compileSdk = 35
-        namespace = "org.jetbrains.androidx.compose.material3"
+    redirect("androidx.compose.material3") {
+        androidLibrary {
+            compileSdk = 35
+            namespace = "org.jetbrains.androidx.compose.material3"
 
-        androidResources.enable = true
+            androidResources.enable = true
+        }
     }
     desktop()
     mac()
