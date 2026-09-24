@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
   pages: write
   id-token: write
 
@@ -23,17 +22,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Set iOS deployment target
         run: printf 'IPHONEOS_DEPLOYMENT_TARGET = 15.0\n' > "$RUNNER_TEMP/compose-blur-build.xcconfig"
-      - name: Publish Android and iOS artifacts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          XCODE_XCCONFIG_FILE: ${{ runner.temp }}/compose-blur-build.xcconfig
-        run: |
-          ./gradlew :mpp:publishComposeJbToGitHubPackages \
-            -Pcompose.platforms=ios,android \
-            -Pjetbrains.publication.libraries=COMPOSE,COMPOSE_MATERIAL3 \
-            --no-configuration-cache \
-            -Dorg.gradle.configureondemand=false \
-            --parallel --max-workers=6 --console=plain
       - name: Publish to public Maven directory
         env:
           XCODE_XCCONFIG_FILE: ${{ runner.temp }}/compose-blur-build.xcconfig
