@@ -43,7 +43,7 @@ import org.jetbrains.skia.Canvas
 import platform.CoreGraphics.CGPoint
 import platform.CoreGraphics.CGRectZero
 import platform.UIKit.UIBlurEffect
-import platform.UIKit.UIBlurEffectStyleSystemThickMaterial
+import platform.UIKit.UIBlurEffectStyleDark
 import platform.UIKit.UIEvent
 import platform.UIKit.UIView
 import platform.UIKit.UIViewController
@@ -98,7 +98,7 @@ internal class ComposeLayersViewController(
         userInteractionEnabled = false
     }
     private val backdropBlurEffect =
-        UIBlurEffect.effectWithStyle(UIBlurEffectStyleSystemThickMaterial)
+        UIBlurEffect.effectWithStyle(UIBlurEffectStyleDark)
     private var isBackdropBlurEnabled = false
 
     init {
