@@ -109,11 +109,11 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
     val usePlatformInsets: Boolean = true,
     val useSoftwareKeyboardInset: Boolean = true,
     val scrimColor: Color = DefaultScrimColor,
-    val blurBehindRadius: Dp = Dp.Unspecified,
+    actual val blurBehindRadius: Dp = Dp.Unspecified,
     @property:ExperimentalComposeUiApi
     val animateTransition: Boolean = ComposeUiFlags.isDialogAnimationEnabled,
 ) {
-    actual constructor(
+    constructor(
         dismissOnBackPress: Boolean,
         dismissOnClickOutside: Boolean,
         usePlatformDefaultWidth: Boolean,
@@ -124,6 +124,19 @@ actual class DialogProperties @ExperimentalComposeUiApi constructor(
         usePlatformInsets = true,
         useSoftwareKeyboardInset = true,
         scrimColor = DefaultScrimColor,
+    )
+
+    actual constructor(
+        dismissOnBackPress: Boolean,
+        dismissOnClickOutside: Boolean,
+        usePlatformDefaultWidth: Boolean,
+        blurBehindRadius: Dp,
+    ) : this(
+        dismissOnBackPress = dismissOnBackPress,
+        dismissOnClickOutside = dismissOnClickOutside,
+        usePlatformDefaultWidth = usePlatformDefaultWidth,
+        blurBehindRadius = blurBehindRadius,
+        usePlatformInsets = true,
     )
 
     constructor(

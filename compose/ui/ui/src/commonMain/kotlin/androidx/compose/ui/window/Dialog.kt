@@ -18,6 +18,7 @@ package androidx.compose.ui.window
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.unit.Dp
 
 /**
  * Properties used to customize the behavior of a [Dialog].
@@ -30,16 +31,19 @@ import androidx.compose.runtime.Immutable
  * @property usePlatformDefaultWidth Whether the width of the dialog's content should be limited to
  *   the platform default, which is smaller than the screen width. **Might be used only as named
  *   argument**.
+ * @property blurBehindRadius Blur radius for Compose content behind the dialog. Zero disables blur.
  */
 @Immutable
 expect class DialogProperties(
     dismissOnBackPress: Boolean = true,
     dismissOnClickOutside: Boolean = true,
     usePlatformDefaultWidth: Boolean = true,
+    blurBehindRadius: Dp = Dp.Unspecified,
 ) {
     val dismissOnBackPress: Boolean
     val dismissOnClickOutside: Boolean
     val usePlatformDefaultWidth: Boolean
+    val blurBehindRadius: Dp
 }
 
 /**

@@ -18,7 +18,9 @@ package androidx.compose.ui.window
 
 import android.content.Context
 import android.graphics.Outline
+import android.graphics.RenderEffect
 import android.graphics.Rect
+import android.graphics.Shader
 import android.os.Build
 import android.os.IBinder
 import android.util.DisplayMetrics
@@ -64,6 +66,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
@@ -122,6 +126,8 @@ import kotlin.math.roundToInt
  *   necessary permissions to add windows of the specified [windowType]. Providing an invalid,
  *   stale, or permission-denied token will typically result in a
  *   [android.view.WindowManager.BadTokenException] when the dialog attempts to show.
+ * @property blurBehindRadius Blur radius for the host Compose view behind the dialog on Android 12
+ *   and newer. Zero disables blur.
  *
  *   Example usage:
  *
@@ -137,8 +143,9 @@ actual class DialogProperties(
     val windowTitle: String = "",
     val windowType: Int = WindowManager.LayoutParams.TYPE_APPLICATION,
     val windowToken: IBinder? = null,
+    actual val blurBehindRadius: Dp = Dp.Unspecified,
 ) {
-    actual constructor(
+    constructor(
         dismissOnBackPress: Boolean,
         dismissOnClickOutside: Boolean,
         usePlatformDefaultWidth: Boolean,
@@ -148,6 +155,19 @@ actual class DialogProperties(
         securePolicy = SecureFlagPolicy.Inherit,
         usePlatformDefaultWidth = usePlatformDefaultWidth,
         decorFitsSystemWindows = true,
+    )
+
+    actual constructor(
+        dismissOnBackPress: Boolean,
+        dismissOnClickOutside: Boolean,
+        usePlatformDefaultWidth: Boolean,
+        blurBehindRadius: Dp,
+    ) : this(
+        dismissOnBackPress = dismissOnBackPress,
+        dismissOnClickOutside = dismissOnClickOutside,
+        usePlatformDefaultWidth = usePlatformDefaultWidth,
+        blurBehindRadius = blurBehindRadius,
+        securePolicy = SecureFlagPolicy.Inherit,
     )
 
     @Deprecated("Maintained for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -209,6 +229,7 @@ actual class DialogProperties(
         if (decorFitsSystemWindows != other.decorFitsSystemWindows) return false
         if (windowType != other.windowType) return false
         if (windowToken != other.windowToken) return false
+        if (blurBehindRadius != other.blurBehindRadius) return false
         return true
     }
 
@@ -220,6 +241,7 @@ actual class DialogProperties(
         result = 31 * result + decorFitsSystemWindows.hashCode()
         result = 31 * result + windowType
         result = 31 * result + (windowToken?.hashCode() ?: 0)
+        result = 31 * result + blurBehindRadius.hashCode()
         return result
     }
 }
@@ -514,7 +536,7 @@ private class DialogWrapper(
     private var properties: DialogProperties,
     private val composeView: View,
     layoutDirection: LayoutDirection,
-    density: Density,
+    private val density: Density,
     dialogId: UUID,
 ) :
     ComponentDialog(
@@ -540,6 +562,7 @@ private class DialogWrapper(
     private val maxSupportedElevation = 8.dp
 
     private var isPressOutside = false
+    private var isBackdropBlurApplied = false
 
     override val subCompositionView: AbstractComposeView
         get() = dialogLayout
@@ -698,6 +721,7 @@ private class DialogWrapper(
             decorFitsSystemWindows = decorFitsSystemWindows,
         )
         setCanceledOnTouchOutside(properties.dismissOnClickOutside)
+        updateBackdropBlur(density)
         val window = window
         if (window != null) {
             val softInput =
@@ -713,7 +737,32 @@ private class DialogWrapper(
     }
 
     fun disposeComposition() {
+        clearBackdropBlur()
         dialogLayout.disposeComposition()
+    }
+
+    private fun updateBackdropBlur(density: Density) {
+        if (Build.VERSION.SDK_INT < 31) return
+        val radius = if (properties.blurBehindRadius.isSpecified) {
+            with(density) { properties.blurBehindRadius.toPx() }.coerceAtLeast(0f)
+        } else {
+            0f
+        }
+        if (radius > 0f) {
+            composeView.setRenderEffect(
+                RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
+            )
+            isBackdropBlurApplied = true
+        } else {
+            clearBackdropBlur()
+        }
+    }
+
+    private fun clearBackdropBlur() {
+        if (Build.VERSION.SDK_INT >= 31 && isBackdropBlurApplied) {
+            composeView.setRenderEffect(null)
+            isBackdropBlurApplied = false
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
