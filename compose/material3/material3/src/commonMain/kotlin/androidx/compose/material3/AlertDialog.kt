@@ -134,6 +134,7 @@ expect fun AlertDialog(
  *   pressing the back button. This is not called when the dismiss button is clicked.
  * @param modifier the [Modifier] to be applied to this dialog's content.
  * @param properties typically platform specific properties to further configure the dialog.
+ * @param blurBehindRadius Blur radius for Compose content behind the dialog. Zero disables blur.
  * @param content the content of the dialog
  */
 @OptIn(ExperimentalMaterial3ComponentOverrideApi::class)
@@ -143,6 +144,7 @@ fun BasicAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     properties: DialogProperties = DialogProperties(),
+    blurBehindRadius: Dp = Dp.Unspecified,
     content: @Composable () -> Unit,
 ) {
     with(LocalBasicAlertDialogOverride.current) {
@@ -150,6 +152,7 @@ fun BasicAlertDialog(
                 onDismissRequest = onDismissRequest,
                 modifier = modifier,
                 properties = properties,
+                blurBehindRadius = blurBehindRadius,
                 content = content,
             )
             .BasicAlertDialog()
@@ -166,7 +169,8 @@ fun BasicAlertDialog(
 object DefaultBasicAlertDialogOverride : BasicAlertDialogOverride {
     @Composable
     override fun BasicAlertDialogOverrideScope.BasicAlertDialog() {
-        Dialog(onDismissRequest = onDismissRequest, properties = properties) {
+        val dialogProperties = dialogPropertiesWithBackdropBlur(properties, blurBehindRadius)
+        Dialog(onDismissRequest = onDismissRequest, properties = dialogProperties) {
             val dialogPaneDescription = getString(Strings.Dialog)
             Box(
                 modifier =
@@ -208,7 +212,7 @@ object DefaultBasicAlertDialogOverride : BasicAlertDialogOverride {
  */
 @Deprecated(
     "Use BasicAlertDialog instead",
-    replaceWith = ReplaceWith("BasicAlertDialog(onDismissRequest, modifier, properties, content)"),
+    replaceWith = ReplaceWith("BasicAlertDialog(onDismissRequest, modifier, properties, content = content)"),
 )
 @ExperimentalMaterial3Api
 @Composable
@@ -217,7 +221,7 @@ fun AlertDialog(
     modifier: Modifier = Modifier,
     properties: DialogProperties = DialogProperties(),
     content: @Composable () -> Unit,
-) = BasicAlertDialog(onDismissRequest, modifier, properties, content)
+) = BasicAlertDialog(onDismissRequest, modifier, properties, content = content)
 
 /** Contains default values used for [AlertDialog] and [BasicAlertDialog]. */
 object AlertDialogDefaults {
@@ -472,6 +476,7 @@ internal constructor(
     val onDismissRequest: () -> Unit,
     val modifier: Modifier = Modifier,
     val properties: DialogProperties = DialogProperties(),
+    val blurBehindRadius: Dp = Dp.Unspecified,
     val content: @Composable () -> Unit,
 )
 

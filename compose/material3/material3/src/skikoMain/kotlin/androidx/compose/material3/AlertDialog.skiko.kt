@@ -21,8 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.isSpecified
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.DialogProperties
 import kotlin.js.JsName
 import kotlin.jvm.JvmName
@@ -31,7 +29,6 @@ import kotlin.jvm.JvmName
 // `@file:JvmName` doesn't work here because Android and Desktop were published with different names
 // Please note that binary compatibility for Desktop is tracked only in JetBrains fork
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun AlertDialog(
     onDismissRequest: () -> Unit,
@@ -63,20 +60,7 @@ actual fun AlertDialog(
     titleContentColor = titleContentColor,
     textContentColor = textContentColor,
     tonalElevation = tonalElevation,
-    properties = if (blurBehindRadius.isSpecified) {
-        DialogProperties(
-            dismissOnBackPress = properties.dismissOnBackPress,
-            dismissOnClickOutside = properties.dismissOnClickOutside,
-            usePlatformDefaultWidth = properties.usePlatformDefaultWidth,
-            usePlatformInsets = properties.usePlatformInsets,
-            useSoftwareKeyboardInset = properties.useSoftwareKeyboardInset,
-            scrimColor = properties.scrimColor,
-            blurBehindRadius = blurBehindRadius,
-            animateTransition = properties.animateTransition,
-        )
-    } else {
-        properties
-    }
+    properties = dialogPropertiesWithBackdropBlur(properties, blurBehindRadius),
 )
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -89,7 +73,7 @@ fun BasicAlertDialogDeprecated(
     modifier: Modifier,
     properties: DialogProperties,
     content: @Composable () -> Unit
-) = BasicAlertDialog(onDismissRequest, modifier, properties, content)
+) = BasicAlertDialog(onDismissRequest, modifier, properties, content = content)
 
 @Suppress("DEPRECATION")
 @JvmName("AlertDialog")

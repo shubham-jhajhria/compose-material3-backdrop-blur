@@ -23,6 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.LocalSystemTheme
 import androidx.compose.ui.asComposeSystemTheme
 import androidx.compose.ui.graphics.asComposeCanvas
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.skiaImageFilter
 import androidx.compose.ui.navigationevent.UIKitNavigationEventInput
 import androidx.compose.ui.platform.DefaultArchitectureComponentsOwner
 import androidx.compose.ui.platform.FrameRecomposer
@@ -40,6 +43,8 @@ import androidx.compose.ui.uikit.utils.CMPUIWindowSceneUtils
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.compose.ui.viewinterop.UIKitInteropAction
 import androidx.compose.ui.viewinterop.UIKitInteropTransaction
@@ -56,9 +61,11 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.useContents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.skiko.SystemTheme
+import org.jetbrains.skia.Paint
 import platform.Foundation.NSKeyValueObservingOptionNew
 import platform.Foundation.addObserver
 import platform.Foundation.removeObserver
@@ -225,7 +232,24 @@ internal class ComposeContainer(
             },
             useSeparateRenderThreadWhenPossible = configuration.parallelRendering,
             render = { canvas, nanoTime ->
-                mediator?.render(canvas.asComposeCanvas(), nanoTime)
+                val blurRadius = layersHolder?.layersViewController?.backdropBlurRadius
+                if (blurRadius != null && blurRadius.isSpecified && blurRadius > 0.dp) {
+                    val density = view.density
+                    val radiusPx = with(density) { blurRadius.toPx() }
+                    val width = view.bounds.useContents { size.width.toFloat() } * density.density
+                    val height = view.bounds.useContents { size.height.toFloat() } * density.density
+                    Paint().use { paint ->
+                        paint.imageFilter = BlurEffect(radiusPx, radiusPx, TileMode.Clamp).skiaImageFilter
+                        canvas.saveLayer(0f, 0f, width, height, paint)
+                        try {
+                            mediator?.render(canvas.asComposeCanvas(), nanoTime)
+                        } finally {
+                            canvas.restore()
+                        }
+                    }
+                } else {
+                    mediator?.render(canvas.asComposeCanvas(), nanoTime)
+                }
             }
         )
         metalView.canBeOpaque = configuration.opaque

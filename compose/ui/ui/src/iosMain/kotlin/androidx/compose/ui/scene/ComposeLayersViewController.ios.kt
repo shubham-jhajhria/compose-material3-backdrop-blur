@@ -42,12 +42,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.skia.Canvas
 import platform.CoreGraphics.CGPoint
 import platform.CoreGraphics.CGRectZero
-import platform.UIKit.UIBlurEffect
-import platform.UIKit.UIBlurEffectStyle
 import platform.UIKit.UIEvent
 import platform.UIKit.UIView
 import platform.UIKit.UIViewController
-import platform.UIKit.UIVisualEffectView
 import platform.UIKit.UIWindow
 import platform.UIKit.beginAppearanceTransition
 import platform.UIKit.endAppearanceTransition
@@ -92,14 +89,8 @@ internal class ComposeLayersViewController(
         )
     }
 
-    // Dialog layers use a separate Metal surface. Its canvas cannot filter pixels rendered by
-    // the hosting Compose view, so blur the content below the layer with UIKit instead.
-    private val backdropBlurView = UIVisualEffectView(effect = null).apply {
-        userInteractionEnabled = false
-    }
-    private val backdropBlurEffect =
-        UIBlurEffect.effectWithStyle(UIBlurEffectStyle.UIBlurEffectStyleSystemThickMaterial)
-    private var isBackdropBlurEnabled = false
+    var backdropBlurRadius: Dp = Dp.Unspecified
+        private set
 
     init {
         coroutineContext.job.invokeOnCompletion {
@@ -119,7 +110,6 @@ internal class ComposeLayersViewController(
             animateSizeTransition(initialSize = initialSize)
         }
         composeContainerView.setFrame(view.bounds)
-        backdropBlurView.setFrame(view.bounds)
         windowContext.updateWindowContainerSize()
     }
 
@@ -170,17 +160,16 @@ internal class ComposeLayersViewController(
 
     override fun loadView() {
         this.view = ComposeLayersView()
-        this.view.addSubview(backdropBlurView)
         this.view.addSubview(composeContainerView)
     }
 
     fun updateBackdropBlur() {
-        val shouldBlur = layers.any {
-            it.backdropBlurRadius.isSpecified && it.backdropBlurRadius > 0.dp
-        }
-        if (isBackdropBlurEnabled == shouldBlur) return
-        isBackdropBlurEnabled = shouldBlur
-        backdropBlurView.effect = if (shouldBlur) backdropBlurEffect else null
+        val radius = layers.mapNotNull { layer ->
+            layer.backdropBlurRadius.takeIf { it.isSpecified && it > 0.dp }
+        }.maxOrNull() ?: Dp.Unspecified
+        if (backdropBlurRadius == radius) return
+        backdropBlurRadius = radius
+        hostingComposeView.redrawer?.setNeedsRedraw()
     }
 
     val hasInvalidations: Boolean get() = this.layers.any { it.hasInvalidations }
