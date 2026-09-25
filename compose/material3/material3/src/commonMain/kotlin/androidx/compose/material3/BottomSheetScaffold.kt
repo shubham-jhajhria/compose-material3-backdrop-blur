@@ -16,6 +16,7 @@
 
 package androidx.compose.material3
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
@@ -40,10 +41,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.Layout
@@ -54,6 +58,7 @@ import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMaxOfOrNull
@@ -105,6 +110,8 @@ import kotlinx.coroutines.launch
  * @param contentColor the preferred color for content inside this scaffold. Defaults to either the
  *   matching content color for [containerColor], or to the current [LocalContentColor] if
  *   [containerColor] is not a color from the theme.
+ * @param blurBehindRadius Blur radius for the body and top bar while the sheet is visible. Zero
+ *   disables blur.
  * @param content content of the screen. The lambda receives a [PaddingValues] that should be
  *   applied to the content root via [androidx.compose.foundation.layout.padding] and
  *   [androidx.compose.foundation.layout.consumeWindowInsets] to properly offset top and bottom
@@ -130,8 +137,30 @@ fun BottomSheetScaffold(
     snackbarHost: @Composable (SnackbarHostState) -> Unit = { SnackbarHost(it) },
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = contentColorFor(containerColor),
+    blurBehindRadius: Dp = Dp.Unspecified,
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    val backgroundBlurRadius by animateDpAsState(
+        targetValue = if (
+            blurBehindRadius.isSpecified &&
+                (scaffoldState.bottomSheetState.currentValue != Hidden ||
+                    scaffoldState.bottomSheetState.targetValue != Hidden)
+        ) {
+            blurBehindRadius
+        } else {
+            0.dp
+        },
+        label = "Bottom sheet background blur",
+    )
+    val density = LocalDensity.current
+    val backgroundBlurEffect = remember(backgroundBlurRadius, density) {
+        if (backgroundBlurRadius > 0.dp) {
+            val radius = with(density) { backgroundBlurRadius.toPx() }
+            BlurEffect(radius, radius)
+        } else {
+            null
+        }
+    }
     Box(modifier.fillMaxSize().background(containerColor)) {
         // Using composition local provider instead of Surface as Surface implements .clip() which
         // intercepts touch events in testing.
@@ -142,6 +171,7 @@ fun BottomSheetScaffold(
                 snackbarHost = { snackbarHost(scaffoldState.snackbarHostState) },
                 sheetOffset = { scaffoldState.bottomSheetState.requireOffset() },
                 sheetState = scaffoldState.bottomSheetState,
+                backgroundBlurEffect = backgroundBlurEffect,
                 bottomSheet = {
                     StandardBottomSheet(
                         state = scaffoldState.bottomSheetState,
@@ -457,6 +487,7 @@ private fun BottomSheetScaffoldLayout(
     snackbarHost: @Composable () -> Unit,
     sheetOffset: () -> Float,
     sheetState: SheetState,
+    backgroundBlurEffect: RenderEffect?,
 ) {
     Layout(
         contents = listOf<@Composable () -> Unit>(topBar ?: {}, body, bottomSheet, snackbarHost)
@@ -492,8 +523,24 @@ private fun BottomSheetScaffoldLayout(
                 }
 
             // Placement order is important for elevation
-            bodyPlaceables.fastForEach { it.placeRelative(0, topBarHeight) }
-            topBarPlaceables.fastForEach { it.placeRelative(0, 0) }
+            bodyPlaceables.fastForEach {
+                if (backgroundBlurEffect == null) {
+                    it.placeRelative(0, topBarHeight)
+                } else {
+                    it.placeRelativeWithLayer(0, topBarHeight) {
+                        renderEffect = backgroundBlurEffect
+                    }
+                }
+            }
+            topBarPlaceables.fastForEach {
+                if (backgroundBlurEffect == null) {
+                    it.placeRelative(0, 0)
+                } else {
+                    it.placeRelativeWithLayer(0, 0) {
+                        renderEffect = backgroundBlurEffect
+                    }
+                }
+            }
             sheetPlaceables.fastForEach { it.placeRelative(sheetOffsetX, 0) }
             snackbarPlaceables.fastForEach { it.placeRelative(snackbarOffsetX, snackbarOffsetY) }
         }
