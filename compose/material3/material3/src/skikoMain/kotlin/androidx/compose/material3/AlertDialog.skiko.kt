@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.DialogProperties
 import kotlin.js.JsName
 import kotlin.jvm.JvmName
@@ -29,6 +31,7 @@ import kotlin.jvm.JvmName
 // `@file:JvmName` doesn't work here because Android and Desktop were published with different names
 // Please note that binary compatibility for Desktop is tracked only in JetBrains fork
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun AlertDialog(
     onDismissRequest: () -> Unit,
@@ -44,7 +47,8 @@ actual fun AlertDialog(
     titleContentColor: Color,
     textContentColor: Color,
     tonalElevation: Dp,
-    properties: DialogProperties
+    properties: DialogProperties,
+    blurBehindRadius: Dp,
 ): Unit = AlertDialogImpl(
     onDismissRequest = onDismissRequest,
     confirmButton = confirmButton,
@@ -59,7 +63,20 @@ actual fun AlertDialog(
     titleContentColor = titleContentColor,
     textContentColor = textContentColor,
     tonalElevation = tonalElevation,
-    properties = properties
+    properties = if (blurBehindRadius.isSpecified) {
+        DialogProperties(
+            dismissOnBackPress = properties.dismissOnBackPress,
+            dismissOnClickOutside = properties.dismissOnClickOutside,
+            usePlatformDefaultWidth = properties.usePlatformDefaultWidth,
+            usePlatformInsets = properties.usePlatformInsets,
+            useSoftwareKeyboardInset = properties.useSoftwareKeyboardInset,
+            scrimColor = properties.scrimColor,
+            blurBehindRadius = blurBehindRadius,
+            animateTransition = properties.animateTransition,
+        )
+    } else {
+        properties
+    }
 )
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)

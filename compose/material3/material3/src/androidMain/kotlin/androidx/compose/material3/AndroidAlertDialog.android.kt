@@ -16,11 +16,18 @@
 
 package androidx.compose.material3
 
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.window.DialogProperties
 
 // Keep expect/actual for maintain binary compatibility.
@@ -43,7 +50,26 @@ actual fun AlertDialog(
     textContentColor: Color,
     tonalElevation: Dp,
     properties: DialogProperties,
-): Unit =
+    blurBehindRadius: Dp,
+) {
+    val hostView = LocalView.current
+    val density = LocalDensity.current
+    DisposableEffect(hostView, density, blurBehindRadius) {
+        val radius = if (blurBehindRadius.isSpecified) {
+            with(density) { blurBehindRadius.toPx() }.coerceAtLeast(0f)
+        } else {
+            0f
+        }
+        val applyBlur = Build.VERSION.SDK_INT >= 31 && radius > 0f
+        if (applyBlur) {
+            hostView.setRenderEffect(
+                RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP)
+            )
+        }
+        onDispose {
+            if (applyBlur) hostView.setRenderEffect(null)
+        }
+    }
     AlertDialogImpl(
         onDismissRequest = onDismissRequest,
         confirmButton = confirmButton,
@@ -60,3 +86,4 @@ actual fun AlertDialog(
         tonalElevation = tonalElevation,
         properties = properties,
     )
+}
