@@ -29,8 +29,8 @@ jobs:
           ./gradlew :mpp:publishComposeJbToMavenLocal \
             -Pcompose.platforms=ios,android \
             -Pjetbrains.publication.libraries=COMPOSE,COMPOSE_MATERIAL3 \
-            -Pjetbrains.publication.version.COMPOSE=9999.0.9-SNAPSHOT \
-            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=9999.0.9-SNAPSHOT \
+            -Pjetbrains.publication.version.COMPOSE=9999.0.10-SNAPSHOT \
+            -Pjetbrains.publication.version.COMPOSE_MATERIAL3=9999.0.10-SNAPSHOT \
             -Dmaven.repo.local="$RUNNER_TEMP/compose-maven" \
             --no-configuration-cache \
             -Dorg.gradle.configureondemand=false \
