@@ -37,7 +37,7 @@ plugins {
 
 androidXMultiplatform {
     androidLibrary {
-        compileSdk { version = release(37) }
+        compileSdk = 36
         namespace = "androidx.compose.material3"
         androidResources.enable = true
     }
