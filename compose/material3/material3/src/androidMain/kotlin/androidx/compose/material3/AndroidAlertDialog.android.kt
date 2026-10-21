@@ -43,7 +43,9 @@ public actual fun AlertDialog(
     textContentColor: Color,
     tonalElevation: Dp,
     properties: DialogProperties,
-): Unit =
+    blurBehindRadius: Dp,
+) {
+    val dialogProperties = dialogPropertiesWithBackdropBlur(properties, blurBehindRadius)
     AlertDialogImpl(
         onDismissRequest = onDismissRequest,
         confirmButton = confirmButton,
@@ -58,5 +60,6 @@ public actual fun AlertDialog(
         titleContentColor = titleContentColor,
         textContentColor = textContentColor,
         tonalElevation = tonalElevation,
-        properties = properties,
+        properties = dialogProperties,
     )
+}

@@ -87,6 +87,7 @@ import androidx.compose.ui.window.DialogProperties
  *   overlay is applied on top of the container. A higher tonal elevation value will result in a
  *   darker color in light theme and lighter color in dark theme. See also: [Surface].
  * @param properties typically platform specific properties to further configure the dialog.
+ * @param blurBehindRadius Blur radius for Compose content behind the dialog. Zero disables blur.
  * @see BasicAlertDialog
  */
 @Composable
@@ -105,6 +106,7 @@ public expect fun AlertDialog(
     textContentColor: Color = AlertDialogDefaults.textContentColor,
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     properties: DialogProperties = DialogProperties(),
+    blurBehindRadius: Dp = Dp.Unspecified,
 )
 
 /**
@@ -130,6 +132,7 @@ public expect fun AlertDialog(
  *   pressing the back button. This is not called when the dismiss button is clicked.
  * @param modifier the [Modifier] to be applied to this dialog's content.
  * @param properties typically platform specific properties to further configure the dialog.
+ * @param blurBehindRadius Blur radius for Compose content behind the dialog. Zero disables blur.
  * @param content the content of the dialog
  */
 @Composable
@@ -137,9 +140,11 @@ public fun BasicAlertDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     properties: DialogProperties = DialogProperties(),
+    blurBehindRadius: Dp = Dp.Unspecified,
     content: @Composable () -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = properties) {
+    val dialogProperties = dialogPropertiesWithBackdropBlur(properties, blurBehindRadius)
+    Dialog(onDismissRequest = onDismissRequest, properties = dialogProperties) {
         val dialogPaneDescription = getString(Strings.Dialog)
         Box(
             modifier =
@@ -180,7 +185,7 @@ public fun BasicAlertDialog(
  */
 @Deprecated(
     "Use BasicAlertDialog instead",
-    replaceWith = ReplaceWith("BasicAlertDialog(onDismissRequest, modifier, properties, content)"),
+    replaceWith = ReplaceWith("BasicAlertDialog(onDismissRequest, modifier, properties, content = content)"),
 )
 @Composable
 public fun AlertDialog(
@@ -188,7 +193,7 @@ public fun AlertDialog(
     modifier: Modifier = Modifier,
     properties: DialogProperties = DialogProperties(),
     content: @Composable () -> Unit,
-): Unit = BasicAlertDialog(onDismissRequest, modifier, properties, content)
+): Unit = BasicAlertDialog(onDismissRequest, modifier, properties, content = content)
 
 /** Contains default values used for [AlertDialog] and [BasicAlertDialog]. */
 public object AlertDialogDefaults {

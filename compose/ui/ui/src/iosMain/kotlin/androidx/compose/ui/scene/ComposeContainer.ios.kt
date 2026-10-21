@@ -24,6 +24,9 @@ import androidx.compose.ui.LocalSystemTheme
 import androidx.compose.ui.graphics.SkiaCanvasHolder
 import androidx.compose.ui.asComposeSystemTheme
 import androidx.compose.ui.navigationevent.IosBackNavigationEventInput
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.skiaImageFilter
 import androidx.compose.ui.platform.DefaultArchitectureComponentsOwner
 import androidx.compose.ui.platform.FrameChoreographer
 import androidx.compose.ui.platform.IosUiMediaScope
@@ -40,6 +43,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.compose.ui.viewinterop.InteropSyncTransaction
 import androidx.compose.ui.window.ComposeContainerLifecycleDelegate
@@ -59,11 +64,13 @@ import kotlinx.cinterop.IntVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.useContents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.jetbrains.skia.Paint
 import platform.UIKit.UIApplication
 import platform.UIKit.UIResponder
 import platform.UIKit.UIUserInterfaceLayoutDirection
@@ -249,7 +256,24 @@ internal class ComposeContainer(
             draw = { canvas ->
              canvasHolder.drawInto(canvas) {
                 layoutInvalidationHandler.postponeLayoutInvalidationCalls {
-                    mediator?.draw(this@drawInto)
+                    val blurRadius = layersHolder?.layersViewController?.backdropBlurRadius
+                    if (blurRadius != null && blurRadius.isSpecified && blurRadius > 0.dp) {
+                        val density = view.density
+                        val radiusPx = with(density) { blurRadius.toPx() }
+                        val width = view.bounds.useContents { size.width.toFloat() } * density.density
+                        val height = view.bounds.useContents { size.height.toFloat() } * density.density
+                        val paint = Paint().apply {
+                            imageFilter = BlurEffect(radiusPx, radiusPx, TileMode.Clamp).skiaImageFilter
+                        }
+                        canvas.saveLayer(0f, 0f, width, height, paint)
+                        try {
+                            mediator?.draw(this@drawInto)
+                        } finally {
+                            canvas.restore()
+                        }
+                    } else {
+                        mediator?.draw(this@drawInto)
+                    }
                 }
               }
             }

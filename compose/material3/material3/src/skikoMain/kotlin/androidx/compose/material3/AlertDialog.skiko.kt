@@ -44,7 +44,8 @@ actual fun AlertDialog(
     titleContentColor: Color,
     textContentColor: Color,
     tonalElevation: Dp,
-    properties: DialogProperties
+    properties: DialogProperties,
+    blurBehindRadius: Dp,
 ): Unit = AlertDialogImpl(
     onDismissRequest = onDismissRequest,
     confirmButton = confirmButton,
@@ -59,7 +60,7 @@ actual fun AlertDialog(
     titleContentColor = titleContentColor,
     textContentColor = textContentColor,
     tonalElevation = tonalElevation,
-    properties = properties
+    properties = dialogPropertiesWithBackdropBlur(properties, blurBehindRadius),
 )
 
 @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -72,7 +73,7 @@ fun BasicAlertDialogDeprecated(
     modifier: Modifier,
     properties: DialogProperties,
     content: @Composable () -> Unit
-) = BasicAlertDialog(onDismissRequest, modifier, properties, content)
+) = BasicAlertDialog(onDismissRequest, modifier, properties, content = content)
 
 @Suppress("DEPRECATION")
 @JvmName("AlertDialog")
