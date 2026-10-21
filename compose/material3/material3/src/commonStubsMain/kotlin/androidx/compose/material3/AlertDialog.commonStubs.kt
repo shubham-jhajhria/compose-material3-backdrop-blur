@@ -39,4 +39,5 @@ public actual fun AlertDialog(
     textContentColor: Color,
     tonalElevation: Dp,
     properties: DialogProperties,
+    blurBehindRadius: Dp,
 ): Unit = implementedInJetBrainsFork()
