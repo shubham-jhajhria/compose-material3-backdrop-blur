@@ -224,6 +224,9 @@ internal class ComposeContainerView(
         setNeedsDisplay()
     }
 
+    /** Redraws the host even when its own scene has nothing pending, e.g. when the backdrop blur changes. */
+    fun requestRedraw() = setNeedsSynchronousDraw()
+
     private fun updateLayout() {
         val metalView = metalView ?: return
         if (isAnimating) {

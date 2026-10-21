@@ -188,7 +188,7 @@ internal class ComposeLayersViewController(
         }.maxOrNull() ?: Dp.Unspecified
         if (backdropBlurRadius == radius) return
         backdropBlurRadius = radius
-        hostingComposeView.redrawer?.setNeedsRedraw()
+        hostingComposeView.requestRedraw()
     }
 
     val hasInvalidations: Boolean get() = this.layers.any { it.hasInvalidations }
