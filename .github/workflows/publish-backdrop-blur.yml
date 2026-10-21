@@ -34,7 +34,7 @@ jobs:
             -Dmaven.repo.local="$RUNNER_TEMP/compose-maven" \
             --no-configuration-cache \
             -Dorg.gradle.configureondemand=false \
-            --parallel --max-workers=6 --console=plain
+            --parallel --max-workers=6 --console=plain --continue
           mkdir -p "$RUNNER_TEMP/pages/maven"
           cp -R "$RUNNER_TEMP/compose-maven/." "$RUNNER_TEMP/pages/maven/"
           touch "$RUNNER_TEMP/pages/.nojekyll"
