@@ -19,6 +19,7 @@ package androidx.compose.ui.window
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.implementedInJetBrainsFork
+import androidx.compose.ui.unit.Dp
 
 @Immutable
 public actual class DialogProperties
@@ -26,6 +27,7 @@ public actual constructor(
     public actual val dismissOnBackPress: Boolean,
     public actual val dismissOnClickOutside: Boolean,
     public actual val usePlatformDefaultWidth: Boolean,
+    public actual val blurBehindRadius: Dp,
 )
 
 @Composable
